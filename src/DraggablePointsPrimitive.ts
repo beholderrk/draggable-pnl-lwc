@@ -39,6 +39,7 @@ export class DraggablePointsPrimitive implements ISeriesPrimitive {
     });
     this._draggablePane.setData({
       points: this._points,
+      possiblePoints: [],
     });
     console.log("attached");
   }
@@ -57,6 +58,7 @@ export class DraggablePointsPrimitive implements ISeriesPrimitive {
     if (this._draggablePane) {
       this._draggablePane.setData({
         points,
+        possiblePoints: [],
       });
       this._requestUpdate?.();
     }
