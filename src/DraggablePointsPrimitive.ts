@@ -4,14 +4,13 @@ import {
   ISeriesPrimitive,
   ISeriesPrimitivePaneRenderer,
   ISeriesPrimitivePaneView,
+  MouseEventParams,
   PrimitiveHoveredItem,
   SeriesAttachedParameter,
-  SeriesDataItemTypeMap,
   SeriesOptionsMap,
   SeriesPrimitivePaneViewZOrder,
   SeriesType,
   SingleValueData,
-  Time,
 } from "lightweight-charts";
 import { DragHandler } from "./DragHandler";
 
@@ -38,7 +37,9 @@ export class DraggablePointsPrimitive implements ISeriesPrimitive {
       series,
       chart,
     });
-    this._draggablePane.setData(this._points);
+    this._draggablePane.setData({
+      points: this._points,
+    });
     console.log("attached");
   }
 
@@ -54,7 +55,9 @@ export class DraggablePointsPrimitive implements ISeriesPrimitive {
   setData(points: IPointsType) {
     this._points = points;
     if (this._draggablePane) {
-      this._draggablePane.setData(points);
+      this._draggablePane.setData({
+        points,
+      });
       this._requestUpdate?.();
     }
   }
@@ -81,6 +84,23 @@ type IPointModel = {
   isHovered: boolean;
 };
 
+type IPossiblePoint = {
+  value: number;
+  time: number;
+};
+
+type IInternalPossiblePoint = {
+  x: number;
+  y: number;
+  time: number;
+  value: number;
+}
+
+type IDataParams = {
+  points: IPointsType;
+  possiblePoints: IPossiblePoint[];
+};
+
 class DraggablePointsPane implements ISeriesPrimitivePaneView {
   private _vicinityThreshold = 10;
   private _series: ISeriesApi<SeriesType, any>;
@@ -88,7 +108,9 @@ class DraggablePointsPane implements ISeriesPrimitivePaneView {
   private _points: IPointModel[] = [];
   private _hoverPoint: IPointModel | null = null;
   private _prevHoverPoint: IPointModel | null = null;
+  private _draggablePoint: IPointModel | null = null;
   private _dragHandler: DragHandler;
+  private _possiblePoints: IInternalPossiblePoint[] = [];
 
   constructor({
     series,
@@ -100,10 +122,9 @@ class DraggablePointsPane implements ISeriesPrimitivePaneView {
     this._series = series;
     this._chart = chart;
     this._dragHandler = new DragHandler(chart);
+    this._dragHandler.onDragStart(this._handleDragEventsStart);
     this._dragHandler.onDrag(this._handleDragEvents);
     this._dragHandler.onDragComplete(this._handleDragCompete);
-    // this._chart.chartElement().addEventListener('pointerdown', this.onPointerDown);
-    // this._chart.chartElement().addEventListener('pointerup', this.onPointerUp);
   }
 
   detached() {
@@ -117,7 +138,7 @@ class DraggablePointsPane implements ISeriesPrimitivePaneView {
   renderer(): ISeriesPrimitivePaneRenderer | null {
     return {
       draw: (target) => {
-        target.useBitmapCoordinateSpace(({ context }) => {
+        target.useMediaCoordinateSpace(({ context }) => {
           const ctx = context;
           for (const point of this._points) {
             ctx.beginPath();
@@ -137,12 +158,14 @@ class DraggablePointsPane implements ISeriesPrimitivePaneView {
     };
   }
 
-  setData(points: IPointsType) {
+  setData({ points, possiblePoints }: IDataParams) {
     this._points = points.map(this._mapPoint);
+    this._possiblePoints = possiblePoints.map(this._mapPossiblePoint);
   }
 
   updatePoints() {
     this._points.forEach(this._updatePoint);
+    this._possiblePoints.forEach(this._updatePossiblePoint);
   }
 
   recalcHover(x: number, y: number): boolean {
@@ -192,13 +215,45 @@ class DraggablePointsPane implements ISeriesPrimitivePaneView {
     point.y = this._series.priceToCoordinate(point.value) as unknown as number;
   };
 
-  private _handleDragEventsStart = () => {
-    /**
-     * save drag point from hover
-     */
+  private _mapPossiblePoint(point: IPossiblePoint): IInternalPossiblePoint {
+    return {
+      x: this._chart
+        .timeScale()
+        .timeToCoordinate(point.time) as unknown as number,
+      y: this._series.priceToCoordinate(point.value) as unknown as number,
+      time: point.time,
+      value: point.value,
+    };
+  }
+
+  private _updatePossiblePoint = (point: IInternalPossiblePoint) => {
+    point.x = this._chart
+      .timeScale()
+      .timeToCoordinate(point.time) as unknown as number;
+    point.y = this._series.priceToCoordinate(point.value) as unknown as number;
   };
 
-  private _handleDragEvents = () => {
+  private _handleDragEventsStart = () => {
+    /**
+     * if hovered point is not null
+     *  stop pane of chart
+     *  save drag point from hover
+     */
+    if (this._hoverPoint === null) {
+      return;
+    }
+    this._chart.applyOptions({
+      handleScroll: {
+        horzTouchDrag: false,
+        vertTouchDrag: false,
+        pressedMouseMove: false,
+      },
+    });
+    this._draggablePoint = this._hoverPoint;
+  };
+
+  private _handleDragEvents = ({ point }: MouseEventParams<any>) => {
+    if (!point) return;
     /**
      * find next possible position for point
      * save next possible position
@@ -210,7 +265,16 @@ class DraggablePointsPane implements ISeriesPrimitivePaneView {
     /**
      * change position of drag point to next possible position for point
      * set drag point to null
-     *
      */
+    this._draggablePoint = null;
+    this._chart.applyOptions({
+      handleScroll: {
+        horzTouchDrag: true,
+        vertTouchDrag: true,
+        pressedMouseMove: true,
+      },
+    });
   };
+
+
 }

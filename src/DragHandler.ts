@@ -1,8 +1,8 @@
-import { IChartApiBase } from "lightweight-charts";
+import { IChartApiBase, MouseEventParams } from "lightweight-charts";
 
 export class DragHandler {
   private _chart: IChartApiBase<any>;
-  private _externalDragHandler?: () => void;
+  private _externalDragHandler?: (param: MouseEventParams<any>) => void;
   private _externalDragStartHandler?: () => void;
   private _externalDragCompleteHandler?: () => void;
 
@@ -18,7 +18,7 @@ export class DragHandler {
     this._externalDragStartHandler = dragStartHandler;
   }
 
-  onDrag(dragHandler: () => void) {
+  onDrag(dragHandler: (param: MouseEventParams<any>) => void) {
     this._externalDragHandler = dragHandler;
   }
 
@@ -33,26 +33,20 @@ export class DragHandler {
     this._chart
       .chartElement()
       .removeEventListener("pointerup", this._onPointerDown);
-    this._chart
-      .chartElement()
-      .removeEventListener("pointermove", this._onPointerMove);
+    this._chart.unsubscribeCrosshairMove(this._onPointerMove);
   }
 
-  private _onPointerDown = (ev: PointerEvent) => {
-    this._chart
-      .chartElement()
-      .addEventListener("pointermove", this._onPointerMove);
+  private _onPointerDown = () => {
+    this._chart.subscribeCrosshairMove(this._onPointerMove);
     this._externalDragStartHandler?.();
   };
 
-  private _onPointerUp = (ev: PointerEvent) => {
-    this._chart
-      .chartElement()
-      .removeEventListener("pointermove", this._onPointerMove);
-    this._externalDragCompleteHandler();
+  private _onPointerUp = () => {
+    this._chart.unsubscribeCrosshairMove(this._onPointerMove);
+    this._externalDragCompleteHandler?.();
   };
 
-  private _onPointerMove = (ev: PointerEvent) => {
-    this._externalDragHandler?.();
+  private _onPointerMove = (param: MouseEventParams<any>) => {
+    this._externalDragHandler?.(param);
   };
 }

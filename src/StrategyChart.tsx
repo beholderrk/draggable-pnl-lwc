@@ -15,6 +15,10 @@ export function StrategyChart() {
       containerRef.current,
       horzScaleBehavior,
       {
+        handleScroll: {
+          // pressedMouseMove: false,
+          // horzTouchDrag: false
+        },
         leftPriceScale: {
           visible: true,
         }
