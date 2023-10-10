@@ -4,6 +4,7 @@ import { parseRgb, rgba, rgbaToString } from "./utils/colors";
 import { HorzScaleBehaviorPrice } from "./HorzScaleBehaviorPrice";
 import css from "./StrategyChart.module.css";
 import { DraggablePointsPrimitive } from "./DraggablePointsPrimitive";
+import { linearSpline } from "./LinearSpline";
 
 export function StrategyChart() {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -45,7 +46,7 @@ export function StrategyChart() {
       lineWidth: 3,
     });
 
-    payoffSeries.setData([
+    const data = [
       {
         time: 1,
         value: -5,
@@ -58,28 +59,72 @@ export function StrategyChart() {
         time: 20,
         value: 5,
       },
-    ]);
+    ];
+    const newTime = new Array(20).fill(0).map((_, index) => index + 1);
+    const newValue = linearSpline(data.map(_ => _.time), data.map(_ => _.value), newTime);
+
+    payoffSeries.setData(newTime.map((time, index) => ({ time, value: newValue[index] })));
 
     const draggable = new DraggablePointsPrimitive();
-    draggable.setData([
-      {
-        time: 10,
-        value: -5,
-      }
-    ]);
-    setTimeout(() => {
-      draggable.setData([
+    draggable.setData({
+      points: [
+        {
+          time: 10,
+          value: -5,
+        }
+      ],
+      possiblePoints: [
         {
           time: 10,
           value: -5,
         },
         {
-          time: 10,
-          value: 5,
+          time: 11,
+          value: -5,
+        },
+        {
+          time: 12,
+          value: -5,
+        },
+        {
+          time: 13,
+          value: -5,
         }
-      ]);
-    }, 5000)
-
+      ]
+    });
+    // setTimeout(() => {
+    //   draggable.setData({
+    //     points: [
+    //       {
+    //         time: 10,
+    //         value: -5,
+    //       },
+    //       {
+    //         time: 10,
+    //         value: 5,
+    //       }
+    //     ],
+    //     possiblePoints: [
+    //       {
+    //         time: 10,
+    //         value: -5,
+    //       },
+    //       {
+    //         time: 11,
+    //         value: -5,
+    //       },
+    //       {
+    //         time: 12,
+    //         value: -5,
+    //       },
+    //       {
+    //         time: 13,
+    //         value: -5,
+    //       }
+    //     ]
+    //   });
+    // }, 5000)
+    draggable.subscribeDragComplete(() => alert('fetch request'));
     payoffSeries.attachPrimitive(draggable);
 
     chart.timeScale().fitContent();
