@@ -99,13 +99,14 @@ export class DraggablePointsPane implements ISeriesPrimitivePaneView {
                 ctx.strokeStyle = "blue";
                 ctx.stroke();
               }
-
-              for (const possiblePoint of this._possiblePoints) {
-                ctx.beginPath();
-                ctx.arc(possiblePoint.x, possiblePoint.y, 3, 0, 2 * Math.PI);
-                ctx.fillStyle = "#aaaaaa";
-                ctx.fill();
-              }
+            }
+          }
+          if (this._draggablePoint !== null) {
+            for (const possiblePoint of this._possiblePoints) {
+              ctx.beginPath();
+              ctx.arc(possiblePoint.x, possiblePoint.y, 3, 0, 2 * Math.PI);
+              ctx.fillStyle = "#aaaaaa";
+              ctx.fill();
             }
           }
           if (this._nextPossiblePoint !== null) {
@@ -117,7 +118,7 @@ export class DraggablePointsPane implements ISeriesPrimitivePaneView {
               0,
               2 * Math.PI
             );
-            ctx.fillStyle = "blue";
+            ctx.fillStyle = "green";
             ctx.fill();
 
             ctx.beginPath();
@@ -128,7 +129,7 @@ export class DraggablePointsPane implements ISeriesPrimitivePaneView {
               0,
               2 * Math.PI
             );
-            ctx.strokeStyle = "blue";
+            ctx.strokeStyle = "green";
             ctx.stroke();
           }
         });
@@ -233,16 +234,12 @@ export class DraggablePointsPane implements ISeriesPrimitivePaneView {
   };
 
   private _handleDragEventsStart = ({ x, y }: { x: number; y: number }) => {
-    /**
-     * if hovered point is not null
-     *  stop pane of chart
-     *  save drag point from hover
-     */
-
-    
-    if (this._hoverPoint === null) {
+    // find point in vicinity
+    const point = this._getPointInVicinity(x, y, this._points);
+    if (point === null) {
       return;
     }
+    // stop pane of chart
     this._chart.applyOptions({
       handleScroll: {
         horzTouchDrag: false,
@@ -250,18 +247,16 @@ export class DraggablePointsPane implements ISeriesPrimitivePaneView {
         pressedMouseMove: false,
       },
     });
-    this._draggablePoint = this._hoverPoint;
+    // save drag point
+    this._draggablePoint = point;
+    this._nextPossiblePoint = point;
   };
 
   private _handleDragEvents = ({ x, y }: { x: number; y: number }) => {
     if (this._draggablePoint == null) return;
 
     // find next possible position for point
-    const nextPossiblePoint = this._getNearestPoint(
-      x,
-      y,
-      this._possiblePoints
-    );
+    const nextPossiblePoint = this._getNearestPoint(x, y, this._possiblePoints);
     if (nextPossiblePoint !== null) {
       // save next possible position
       this._nextPossiblePoint = nextPossiblePoint;
@@ -271,7 +266,7 @@ export class DraggablePointsPane implements ISeriesPrimitivePaneView {
   };
 
   private _handleDragCompete = () => {
-    if(this._draggablePoint === null) return;
+    if (this._draggablePoint === null) return;
 
     // change position of drag point to next possible position for point
     if (this._nextPossiblePoint !== null && this._draggablePoint !== null) {
