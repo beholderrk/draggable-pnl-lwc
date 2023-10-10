@@ -49,82 +49,19 @@ export function StrategyChart() {
     payoffSeries.setData(getLinePoints({ time: 1, value: -5 }, { time: 10, value: -5 }, { time: 20, value: 5 }));
 
     const draggable = new DraggablePointsPrimitive();
-    draggable.setData({
-      points: [
-        {
-          time: 10,
-          value: -5,
-        }
-      ],
-      possiblePoints: [
-        {
-          time: 3,
-          value: -5,
-        },
-        {
-          time: 8,
-          value: -5,
-        },
-        {
-          time: 10,
-          value: -5,
-        },
-        {
-          time: 11,
-          value: -5,
-        },
-        {
-          time: 12,
-          value: -5,
-        },
-        {
-          time: 13,
-          value: -5,
-        },
-        {
-          time: 15,
-          value: -5,
-        },
-        {
-          time: 18,
-          value: -5,
-        }
-      ]
-    });
-    // setTimeout(() => {
-    //   draggable.setData({
-    //     points: [
-    //       {
-    //         time: 10,
-    //         value: -5,
-    //       },
-    //       {
-    //         time: 10,
-    //         value: 5,
-    //       }
-    //     ],
-    //     possiblePoints: [
-    //       {
-    //         time: 10,
-    //         value: -5,
-    //       },
-    //       {
-    //         time: 11,
-    //         value: -5,
-    //       },
-    //       {
-    //         time: 12,
-    //         value: -5,
-    //       },
-    //       {
-    //         time: 13,
-    //         value: -5,
-    //       }
-    //     ]
-    //   });
-    // }, 5000)
+    draggable.setData(getDraggablePoints(10, -5));
+
+    let oldBreak = { time: 10, value: -5 };
+
     draggable.subscribeDragComplete((points) => {
-      payoffSeries.setData(getLinePoints({ time: 1, value: -5 }, points[0], { time: 20, value: 5 }))
+      const newBreak = points[0];
+      const newPremium = oldBreak.time < newBreak.time ? newBreak.value / 2 : newBreak.value * 2;
+      payoffSeries.setData(getLinePoints({ time: 1, value: newPremium }, {
+        time: newBreak.time,
+        value: newPremium
+      }, { time: 20, value: 5 }));
+      draggable.setData(getDraggablePoints(newBreak.time, newPremium));
+      oldBreak = newBreak;
     });
     payoffSeries.attachPrimitive(draggable);
 
@@ -148,3 +85,48 @@ const getLinePoints = (start: SingleValueData<any>, breakLine: SingleValueData<a
   const newValue = linearSpline(data.map(_ => _.time), data.map(_ => _.value), newTime);
   return newTime.map((time, index) => ({ time, value: newValue[index] }))
 }
+
+const getDraggablePoints = (breakTime: number, premium: number) => {
+  return {
+    points: [
+      {
+        time: breakTime,
+        value: premium,
+      }
+    ],
+    possiblePoints: [
+      {
+        time: 3,
+        value: premium,
+      },
+      {
+        time: 8,
+        value: premium,
+      },
+      {
+        time: 10,
+        value: premium,
+      },
+      {
+        time: 11,
+        value: premium,
+      },
+      {
+        time: 12,
+        value: premium,
+      },
+      {
+        time: 13,
+        value: premium,
+      },
+      {
+        time: 15,
+        value: premium,
+      },
+      {
+        time: 18,
+        value: premium,
+      }
+    ]
+  }
+};
