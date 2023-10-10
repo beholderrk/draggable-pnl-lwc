@@ -12,7 +12,7 @@ import { DragHandler } from "./DragHandler";
 
 type IPointsType = SingleValueData<any>[];
 
-type IPointModel = {
+export type IPointModel = {
   x: number;
   y: number;
   time: number;
@@ -38,7 +38,7 @@ type IDataParams = {
 };
 
 type IDraggablePointsPaneOptions = {
-  onDragComplete?: () => void;
+  onDragComplete?: (points: IPointModel[]) => void;
 };
 
 export class DraggablePointsPane implements ISeriesPrimitivePaneView {
@@ -291,6 +291,6 @@ export class DraggablePointsPane implements ISeriesPrimitivePaneView {
         pressedMouseMove: true,
       },
     });
-    this._options.onDragComplete?.();
+    this._options.onDragComplete?.(this._points);
   };
 }

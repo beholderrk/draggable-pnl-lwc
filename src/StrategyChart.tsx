@@ -1,4 +1,4 @@
-import { createChartEx } from "lightweight-charts";
+import { SingleValueData, createChartEx } from "lightweight-charts";
 import { useEffect, useRef } from "react";
 import { parseRgb, rgba, rgbaToString } from "./utils/colors";
 import { HorzScaleBehaviorPrice } from "./HorzScaleBehaviorPrice";
@@ -46,24 +46,7 @@ export function StrategyChart() {
       lineWidth: 3,
     });
 
-    const data = [
-      {
-        time: 1,
-        value: -5,
-      },
-      {
-        time: 10,
-        value: -5,
-      },
-      {
-        time: 20,
-        value: 5,
-      },
-    ];
-    const newTime = new Array(20).fill(0).map((_, index) => index + 1);
-    const newValue = linearSpline(data.map(_ => _.time), data.map(_ => _.value), newTime);
-
-    payoffSeries.setData(newTime.map((time, index) => ({ time, value: newValue[index] })));
+    payoffSeries.setData(getLinePoints({ time: 1, value: -5 }, { time: 10, value: -5 }, { time: 20, value: 5 }));
 
     const draggable = new DraggablePointsPrimitive();
     draggable.setData({
@@ -74,6 +57,14 @@ export function StrategyChart() {
         }
       ],
       possiblePoints: [
+        {
+          time: 3,
+          value: -5,
+        },
+        {
+          time: 8,
+          value: -5,
+        },
         {
           time: 10,
           value: -5,
@@ -88,6 +79,14 @@ export function StrategyChart() {
         },
         {
           time: 13,
+          value: -5,
+        },
+        {
+          time: 15,
+          value: -5,
+        },
+        {
+          time: 18,
           value: -5,
         }
       ]
@@ -124,7 +123,9 @@ export function StrategyChart() {
     //     ]
     //   });
     // }, 5000)
-    draggable.subscribeDragComplete(() => alert('fetch request'));
+    draggable.subscribeDragComplete((points) => {
+      payoffSeries.setData(getLinePoints({ time: 1, value: -5 }, points[0], { time: 20, value: 5 }))
+    });
     payoffSeries.attachPrimitive(draggable);
 
     chart.timeScale().fitContent();
@@ -135,4 +136,15 @@ export function StrategyChart() {
   }, []);
 
   return <div ref={containerRef} className={css.chart}></div>;
+}
+
+const getLinePoints = (start: SingleValueData<any>, breakLine: SingleValueData<any>, end: SingleValueData<any>) => {
+  const data = [
+    start,
+    breakLine,
+    end,
+  ];
+  const newTime = new Array(end.time - start.time).fill(0).map((_, index) => index + start.time);
+  const newValue = linearSpline(data.map(_ => _.time), data.map(_ => _.value), newTime);
+  return newTime.map((time, index) => ({ time, value: newValue[index] }))
 }

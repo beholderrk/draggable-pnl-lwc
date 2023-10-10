@@ -5,7 +5,7 @@ import {
   SeriesOptionsMap,
   SingleValueData
 } from "lightweight-charts";
-import { DraggablePointsPane } from "./DraggablePointsPane";
+import { DraggablePointsPane, IPointModel } from "./DraggablePointsPane";
 import { Delegate } from "./Delegate";
 
 type IPointsType = SingleValueData<any>[];
@@ -33,7 +33,7 @@ export class DraggablePointsPrimitive implements ISeriesPrimitive {
       series,
       chart,
       options: {
-        onDragComplete: () => this._dragCompleteDelegate.fire(),
+        onDragComplete: (points: IPointModel[]) => this._dragCompleteDelegate.fire(points),
       }
     });
     this._draggablePane.setData({
@@ -78,7 +78,7 @@ export class DraggablePointsPrimitive implements ISeriesPrimitive {
     return null;
   }
 
-  subscribeDragComplete(cb: () => void) {
+  subscribeDragComplete(cb: (points: IPointModel[]) => void) {
     this._dragCompleteDelegate.subscribe(this, cb);
   }
 }
