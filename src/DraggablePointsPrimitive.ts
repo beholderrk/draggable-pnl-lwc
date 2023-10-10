@@ -66,7 +66,7 @@ export class DraggablePointsPrimitive implements ISeriesPrimitive {
   }
 
   hitTest(x: number, y: number): PrimitiveHoveredItem | null {
-    // console.log("hitTest");
+    console.log("hitTest");
     if (this._draggablePane === null) return null;
     if (this._draggablePane.recalcHover(x, y)) {
       return {

@@ -5,6 +5,7 @@ function App() {
   return (
     <div className="App">
       <StrategyChart />
+      <span id="test"></span>
     </div>
   );
 }

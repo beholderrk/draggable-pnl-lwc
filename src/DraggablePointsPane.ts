@@ -6,7 +6,6 @@ import {
   IChartApiBase,
   SeriesPrimitivePaneViewZOrder,
   ISeriesPrimitivePaneRenderer,
-  MouseEventParams,
 } from "lightweight-charts";
 import { DragHandler } from "./DragHandler";
 
@@ -233,12 +232,14 @@ export class DraggablePointsPane implements ISeriesPrimitivePaneView {
     point.y = this._series.priceToCoordinate(point.value) as unknown as number;
   };
 
-  private _handleDragEventsStart = () => {
+  private _handleDragEventsStart = ({ x, y }: { x: number; y: number }) => {
     /**
      * if hovered point is not null
      *  stop pane of chart
      *  save drag point from hover
      */
+
+    
     if (this._hoverPoint === null) {
       return;
     }
@@ -252,13 +253,13 @@ export class DraggablePointsPane implements ISeriesPrimitivePaneView {
     this._draggablePoint = this._hoverPoint;
   };
 
-  private _handleDragEvents = ({ point }: MouseEventParams<any>) => {
-    if (!point || this._draggablePoint == null) return;
+  private _handleDragEvents = ({ x, y }: { x: number; y: number }) => {
+    if (this._draggablePoint == null) return;
 
     // find next possible position for point
     const nextPossiblePoint = this._getNearestPoint(
-      point.x,
-      point.y,
+      x,
+      y,
       this._possiblePoints
     );
     if (nextPossiblePoint !== null) {

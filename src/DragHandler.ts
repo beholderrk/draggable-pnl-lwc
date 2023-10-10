@@ -1,9 +1,12 @@
-import { IChartApiBase, MouseEventParams } from "lightweight-charts";
+import { IChartApiBase } from "lightweight-charts";
+
+
+type IPointerPositionHandler = (param: { x: number; y: number }) => void;
 
 export class DragHandler {
   private _chart: IChartApiBase<any>;
-  private _externalDragHandler?: (param: MouseEventParams<any>) => void;
-  private _externalDragStartHandler?: () => void;
+  private _externalDragHandler?: IPointerPositionHandler;
+  private _externalDragStartHandler?: IPointerPositionHandler;
   private _externalDragCompleteHandler?: () => void;
 
   constructor(chart: IChartApiBase<any>) {
@@ -14,11 +17,11 @@ export class DragHandler {
     this._chart.chartElement().addEventListener("pointerup", this._onPointerUp);
   }
 
-  onDragStart(dragStartHandler: () => void) {
+  onDragStart(dragStartHandler: IPointerPositionHandler) {
     this._externalDragStartHandler = dragStartHandler;
   }
 
-  onDrag(dragHandler: (param: MouseEventParams<any>) => void) {
+  onDrag(dragHandler: IPointerPositionHandler) {
     this._externalDragHandler = dragHandler;
   }
 
@@ -33,20 +36,39 @@ export class DragHandler {
     this._chart
       .chartElement()
       .removeEventListener("pointerup", this._onPointerDown);
-    this._chart.unsubscribeCrosshairMove(this._onPointerMove);
+    this._chart
+      .chartElement()
+      .removeEventListener("pointermove", this._onPointerMove);
   }
 
-  private _onPointerDown = () => {
-    this._chart.subscribeCrosshairMove(this._onPointerMove);
-    this._externalDragStartHandler?.();
+  private _onPointerDown = (ev: PointerEvent) => {
+    this._chart
+      .chartElement()
+      .addEventListener("pointermove", this._onPointerMove);
+    this._externalDragStartHandler?.(this._getEventRelativePosition(ev));
   };
 
   private _onPointerUp = () => {
-    this._chart.unsubscribeCrosshairMove(this._onPointerMove);
+    this._chart
+      .chartElement()
+      .removeEventListener("pointermove", this._onPointerMove);
     this._externalDragCompleteHandler?.();
   };
 
-  private _onPointerMove = (param: MouseEventParams<any>) => {
-    this._externalDragHandler?.(param);
+  private _onPointerMove = (ev: PointerEvent) => {
+    this._externalDragHandler?.(this._getEventRelativePosition(ev));
   };
+
+  private _getEventRelativePosition(ev: PointerEvent) {
+    const element = this._chart.chartElement();
+    const chartContainerBox = element.getBoundingClientRect();
+    const priceScaleWidth = this._chart.priceScale("left").width();
+    // const timeScaleHeight = this._chart.timeScale().height();
+    const x = ev.clientX - chartContainerBox.x - priceScaleWidth;
+    const y = ev.clientY - chartContainerBox.y;
+    return {
+      x,
+      y
+    }
+  }
 }
