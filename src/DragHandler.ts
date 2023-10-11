@@ -8,6 +8,7 @@ export class DragHandler {
   private _externalDragHandler?: IPointerPositionHandler;
   private _externalDragStartHandler?: IPointerPositionHandler;
   private _externalDragCompleteHandler?: () => void;
+  private _externalDragCancelHandler?: () => void;
 
   constructor(chart: IChartApiBase<any>) {
     this._chart = chart;
@@ -15,7 +16,9 @@ export class DragHandler {
       .chartElement()
       .addEventListener("pointerdown", this._onPointerDown);
     this._chart.chartElement().addEventListener("pointerup", this._onPointerUp);
+    this._chart.chartElement().addEventListener("pointercancel", this._onPointerCancel);
   }
+
 
   onDragStart(dragStartHandler: IPointerPositionHandler) {
     this._externalDragStartHandler = dragStartHandler;
@@ -27,6 +30,10 @@ export class DragHandler {
 
   onDragComplete(dragCompleteHandler: () => void) {
     this._externalDragCompleteHandler = dragCompleteHandler;
+  }
+
+  onDragCancel(dragCancelHandler: () => void) {
+    this._externalDragCancelHandler = dragCancelHandler;
   }
 
   disconnect() {
@@ -58,6 +65,10 @@ export class DragHandler {
   private _onPointerMove = (ev: PointerEvent) => {
     this._externalDragHandler?.(this._getEventRelativePosition(ev));
   };
+
+  private _onPointerCancel = () => {
+    this._externalDragCancelHandler?.();
+  }
 
   private _getEventRelativePosition(ev: PointerEvent) {
     const element = this._chart.chartElement();

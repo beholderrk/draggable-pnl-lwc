@@ -68,8 +68,10 @@ export class DraggablePointsPane implements ISeriesPrimitivePaneView {
     this._dragHandler.onDragStart(this._handleDragEventsStart);
     this._dragHandler.onDrag(this._handleDragEvents);
     this._dragHandler.onDragComplete(this._handleDragCompete);
+    this._dragHandler.onDragCancel(this._handleDragCancel);
     this._options = options;
   }
+
 
   detached() {
     this._dragHandler.disconnect();
@@ -250,6 +252,7 @@ export class DraggablePointsPane implements ISeriesPrimitivePaneView {
     // save drag point
     this._draggablePoint = point;
     this._nextPossiblePoint = point;
+    // console.log('_handleDragEventsStart', point)
   };
 
   private _handleDragEvents = ({ x, y }: { x: number; y: number }) => {
@@ -263,9 +266,11 @@ export class DraggablePointsPane implements ISeriesPrimitivePaneView {
     } else {
       this._nextPossiblePoint = null;
     }
+    // console.log('_handleDragEvents', { x, y })
   };
 
   private _handleDragCompete = () => {
+    // console.log('_handleDragCompete', this._draggablePoint)
     if (this._draggablePoint === null) return;
 
     // change position of drag point to next possible position for point
@@ -289,4 +294,16 @@ export class DraggablePointsPane implements ISeriesPrimitivePaneView {
     });
     this._options.onDragComplete?.(this._points);
   };
+
+  private _handleDragCancel = () => {
+    this._nextPossiblePoint = null;
+    this._draggablePoint = null;
+    this._chart.applyOptions({
+      handleScroll: {
+        horzTouchDrag: true,
+        vertTouchDrag: true,
+        pressedMouseMove: true,
+      },
+    });
+  }
 }
