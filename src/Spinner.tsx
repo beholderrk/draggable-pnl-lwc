@@ -1,7 +1,7 @@
 import * as React from 'react';
 import clsx from 'clsx';
 
-import './spinner.css';
+import './Spinner.css';
 
 export interface SpinnerProps {
 	className?: string;
