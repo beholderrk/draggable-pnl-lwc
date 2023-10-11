@@ -1,0 +1,46 @@
+.tv-spinner {
+	display: block;
+	position: absolute;
+	width: 1em;
+	height: 1em;
+	top: calc(50% - 0.5em);
+	left: calc(50% - 0.5em);
+	margin: 0 auto;
+	border: 4px solid transparent;
+	border-radius: 50%;
+	border-top-color: var(--tv-spinner-color, #2962FF);
+	border-left-color: var(--tv-spinner-color, #2962FF);
+	animation: tv-spinner__container-rotate 0.9s linear infinite;
+
+  font-size: 14px;
+  border-width: 2px;
+
+	/* &--size {
+		&_xsmall {
+			font-size: 14px;
+			border-width: 2px;
+		}
+
+		&_small {
+			font-size: 20px;
+			border-width: 2px;
+		}
+
+		&_medium {
+			font-size: 28px;
+			border-width: 3px;
+		}
+
+		&_large {
+			font-size: 56px;
+			border-width: 4px;
+		}
+	} */
+}
+
+
+@keyframes tv-spinner__container-rotate {
+	to {
+		transform: rotate(360deg);
+	}
+}

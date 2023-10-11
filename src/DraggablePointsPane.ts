@@ -11,25 +11,23 @@ import { DragHandler } from "./DragHandler";
 
 type IPointsType = SingleValueData<any>[];
 
-export type IPointModel = {
+export type IXYPoint = {
   x: number;
   y: number;
+};
+
+export type ILogicalPoint = {
   time: number;
   value: number;
+}
+
+export type IPointModel = IXYPoint & ILogicalPoint & {
   isHovered: boolean;
 };
 
-type IPossiblePoint = {
-  value: number;
-  time: number;
-};
+type IPossiblePoint = ILogicalPoint;
 
-type IInternalPossiblePoint = {
-  x: number;
-  y: number;
-  time: number;
-  value: number;
-};
+type IInternalPossiblePoint = IXYPoint & ILogicalPoint;
 
 type IDataParams = {
   points: IPointsType;
@@ -38,6 +36,8 @@ type IDataParams = {
 
 type IDraggablePointsPaneOptions = {
   onDragComplete?: (points: IPointModel[]) => void;
+  onDragStart?: (nextPossiblePoint: IXYPoint & ILogicalPoint, dragPoint: IPointModel) => void;
+  onDragMove?: (nextPossiblePoint: IXYPoint & ILogicalPoint, dragPoint: IPointModel) => void;
 };
 
 export class DraggablePointsPane implements ISeriesPrimitivePaneView {
@@ -71,7 +71,6 @@ export class DraggablePointsPane implements ISeriesPrimitivePaneView {
     this._dragHandler.onDragCancel(this._handleDragCancel);
     this._options = options;
   }
-
 
   detached() {
     this._dragHandler.disconnect();
@@ -173,14 +172,14 @@ export class DraggablePointsPane implements ISeriesPrimitivePaneView {
     x: number,
     y: number,
     points: T[]
-  ): T | null {
+  ): T {
     return (
       points.reduce((prev, curr) => {
         return Math.hypot(curr.x - x, curr.y - y) <
           Math.hypot(prev.x - x, prev.y - y)
           ? curr
           : prev;
-      }) ?? null
+      })
     );
   }
 
@@ -253,6 +252,7 @@ export class DraggablePointsPane implements ISeriesPrimitivePaneView {
     this._draggablePoint = point;
     this._nextPossiblePoint = point;
     // console.log('_handleDragEventsStart', point)
+    this._options.onDragStart?.(this._nextPossiblePoint, this._draggablePoint);
   };
 
   private _handleDragEvents = ({ x, y }: { x: number; y: number }) => {
@@ -260,13 +260,9 @@ export class DraggablePointsPane implements ISeriesPrimitivePaneView {
 
     // find next possible position for point
     const nextPossiblePoint = this._getNearestPoint(x, y, this._possiblePoints);
-    if (nextPossiblePoint !== null) {
-      // save next possible position
-      this._nextPossiblePoint = nextPossiblePoint;
-    } else {
-      this._nextPossiblePoint = null;
-    }
+    this._nextPossiblePoint = nextPossiblePoint;
     // console.log('_handleDragEvents', { x, y })
+    this._options.onDragMove?.(nextPossiblePoint, this._draggablePoint);
   };
 
   private _handleDragCompete = () => {

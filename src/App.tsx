@@ -5,7 +5,7 @@ function App() {
   return (
     <div className="App">
       <StrategyChart />
-      <span id="test"></span>
+      <p>Drag the blue point</p>
     </div>
   );
 }

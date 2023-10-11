@@ -3,9 +3,14 @@ import {
   PrimitiveHoveredItem,
   SeriesAttachedParameter,
   SeriesOptionsMap,
-  SingleValueData
+  SingleValueData,
 } from "lightweight-charts";
-import { DraggablePointsPane, IPointModel } from "./DraggablePointsPane";
+import {
+  DraggablePointsPane,
+  ILogicalPoint,
+  IPointModel,
+  IXYPoint,
+} from "./DraggablePointsPane";
 import { Delegate } from "./Delegate";
 
 type IPointsType = SingleValueData<any>[];
@@ -16,6 +21,8 @@ export class DraggablePointsPrimitive implements ISeriesPrimitive {
   private _possiblePoints: IPointsType = [];
   private _requestUpdate?: () => void;
   private _dragCompleteDelegate = new Delegate();
+  private _dragStartDelegate = new Delegate();
+  private _dragMoveDelegate = new Delegate();
 
   constructor() {}
 
@@ -33,19 +40,28 @@ export class DraggablePointsPrimitive implements ISeriesPrimitive {
       series,
       chart,
       options: {
-        onDragComplete: (points: IPointModel[]) => this._dragCompleteDelegate.fire(points),
-      }
+        onDragComplete: (points: IPointModel[]) =>
+          this._dragCompleteDelegate.fire(points),
+        onDragStart: (
+          nextPossiblePoint: IXYPoint & ILogicalPoint,
+          dragPoint: IPointModel
+        ) => this._dragStartDelegate.fire(nextPossiblePoint, dragPoint),
+        onDragMove: (
+          nextPossiblePoint: IXYPoint & ILogicalPoint,
+          dragPoint: IPointModel
+        ) => this._dragMoveDelegate.fire(nextPossiblePoint, dragPoint),
+      },
     });
     this._draggablePane.setData({
       points: this._points,
       possiblePoints: this._possiblePoints,
     });
-    // console.log("attached");
   }
 
   detached(): void {
     this._draggablePane?.detached();
     this._dragCompleteDelegate.destroy();
+    this._dragStartDelegate.destroy();
   }
 
   updateAllViews(): void {
@@ -53,7 +69,13 @@ export class DraggablePointsPrimitive implements ISeriesPrimitive {
     this._draggablePane?.updatePoints();
   }
 
-  setData({ points, possiblePoints }: { points: IPointsType, possiblePoints: IPointsType }) {
+  setData({
+    points,
+    possiblePoints,
+  }: {
+    points: IPointsType;
+    possiblePoints: IPointsType;
+  }) {
     this._points = points;
     this._possiblePoints = possiblePoints;
     if (this._draggablePane) {
@@ -81,6 +103,16 @@ export class DraggablePointsPrimitive implements ISeriesPrimitive {
   subscribeDragComplete(cb: (points: IPointModel[]) => void) {
     this._dragCompleteDelegate.subscribe(this, cb);
   }
+
+  subscribeDragStart(
+    cb: (nextPossiblePoint: IXYPoint & ILogicalPoint, dragPoint: IPointModel) => void
+  ) {
+    this._dragStartDelegate.subscribe(this, cb);
+  }
+
+  subscribeDragMove(
+    cb: (nextPossiblePoint: IXYPoint & ILogicalPoint, dragPoint: IPointModel) => void
+  ) {
+    this._dragMoveDelegate.subscribe(this, cb);
+  }
 }
-
-
